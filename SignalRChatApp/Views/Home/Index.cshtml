@@ -1,0 +1,48 @@
+﻿@model IEnumerable<Room>
+
+@{
+    ViewData["Title"] = "Home Page";
+}
+
+<div class="chat-body">
+    @foreach (var room in Model)
+    {
+        @*<a class="room-button" asp-controller="Home" asp-action="JoinRoom" asp-route-id="@room.Id">@room.Name</a>*@
+        @if(room.Password != null)
+        {
+            <a class="room-button" id="check-room-password-button" href="javascript:void(0)">@room.Name (private)</a>
+            <div class="modal" id="check-room-password-modal">
+                <form class="modal-body" asp-controller="Home" asp-action="CheckRoomPassword" autocomplete="off">
+                    <input type="hidden" name="id" value="@room.Id" />
+                    <input class="close" type="button" value="X" onclick="closePasswordModal()" />
+                    <header>Enter Room</header>
+                    <div>
+                        <input type="password" name="password" placeholder="Password" />
+                    </div>
+                    <footer>
+                        <input type="submit" value="Enter" />
+                    </footer>
+                </form>
+            </div>
+        }
+        else
+        {
+            <a class="room-button" asp-controller="Home" asp-action="JoinRoom" asp-route-id="@room.Id">@room.Name</a>
+        }
+    }
+</div>
+
+@section scripts{
+    <script>
+        var checkRoomPasswordButton = document.getElementById('check-room-password-button');
+        var checkRoomPasswordModal = document.getElementById('check-room-password-modal');
+
+        checkRoomPasswordButton.addEventListener('click', function () {
+            checkRoomPasswordModal.classList.add('active');
+        });
+
+        function closePasswordModal() {
+            checkRoomPasswordModal.classList.remove('active');
+        }
+    </script>
+}

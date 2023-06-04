@@ -1,0 +1,12 @@
+﻿@model IEnumerable<Room>
+
+<div class="menu">
+    @foreach (var room in Model)
+    {
+        <a class="room-button" asp-controller="Home" asp-action="Room" asp-route-id="@room.Id">@room.Name</a>
+    }
+    @if (User.IsInRole("Admin") || User.IsInRole("Moderation"))
+    {
+        <a class="room-button" id="create-room-button" href="#">+</a>
+    }
+</div>

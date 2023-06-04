@@ -1,0 +1,149 @@
+﻿@model Room
+
+@{
+    var userRole = User.IsInRole("Admin") || User.IsInRole("Moderation") ? true : false;
+}
+
+<div class="chat-body" id="chat-body-id">
+    @foreach(var message in Model.Messages)
+    {
+        <div class="message">
+            @if (User.IsInRole("Admin") || User.IsInRole("Moderation"))
+            {
+                <form asp-controller="Home" asp-action="KickUser">
+                    <input type="hidden" name="username" value="@message.UserName">
+                    <input type="hidden" name="roomId" value="@Model.Id" />
+                    <input type="submit" value="Kick">
+                </form>
+
+                <form asp-controller="Home" asp-action="BanUser">
+                    <input type="hidden" name="username" value="@message.UserName">
+                    <input type="hidden" name="roomId" value="@Model.Id" />
+                    <input type="submit" value="Ban">
+                </form>
+            }
+            <header>@message.UserName:</header>
+            <p>@message.Text</p>
+            <footer>@message.TimeStamp</footer>
+        </div>
+    }
+</div>
+
+<div class="chat-input">
+    <form asp-controller="Home" asp-action="CreateMessage" onsubmit="sendMessage(event)">
+        <input type="hidden" name="roomId" value="@Model.Id" />
+        @*<input type="hidden" name="roomName" value="@Model.Name" />*@
+        <input type="text" name="message" id="message-id" autocomplete="off" />
+        <input type="submit" value="Send" />
+    </form>
+    <form class="leave-room-button" asp-controller="Home" asp-action="LeaveRoom">
+        <input type="hidden" name="roomId" value="@Model.Id" />
+        <input type="submit" value="Leave"/>
+    </form>
+</div>
+
+@section scripts{
+    <script src="~/js/signalr.js"></script>
+    <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+    <script>
+        var connection = new signalR.HubConnectionBuilder().withUrl("/chatHub").build();
+
+        var _connectionId = "";
+
+        connection.on("ReceiveMessage", (data) => {
+            //console.log(data);
+            var isAdminOrMod = '@userRole';
+
+            var message = document.createElement('div');
+            message.classList.add('message');
+
+            var header = document.createElement('header');
+            header.appendChild(document.createTextNode(data.userName + ":"));
+
+            var p = document.createElement('p');
+            p.appendChild(document.createTextNode(data.text));
+
+            var footer = document.createElement('footer');
+            var date = new Date(data.timeStamp).toLocaleString();
+            footer.appendChild(document.createTextNode(date));
+
+            if (isAdminOrMod == "True") {
+                var form = document.createElement('form');
+                form.setAttribute('action', '/Home/KickUser');
+                form.setAttribute('method', 'post');
+
+                var userNameInput = document.createElement('input');
+                userNameInput.setAttribute('type', 'hidden');
+                userNameInput.setAttribute('name', 'username');
+                userNameInput.setAttribute('value', data.userName);
+
+                var roomIdInput = document.createElement('input');
+                roomIdInput.setAttribute('type', 'hidden');
+                roomIdInput.setAttribute('name', 'roomId');
+                roomIdInput.setAttribute('value', data.roomId);
+
+                var submitInput = document.createElement('input');
+                submitInput.setAttribute('type', 'submit');
+                submitInput.setAttribute('value', 'Kick');
+
+                var token = `@Html.AntiForgeryToken()`
+                token = $(token).val();
+                var antiforgeryToken = document.createElement('input');
+                antiforgeryToken.setAttribute('type', 'hidden');
+                antiforgeryToken.setAttribute('name', '__RequestVerificationToken');
+                antiforgeryToken.setAttribute('value', token);
+
+                form.appendChild(userNameInput);
+                form.appendChild(roomIdInput);
+                form.appendChild(submitInput);
+                form.appendChild(antiforgeryToken);
+
+                message.appendChild(form);
+            }
+
+            //message.appendChild(form);
+            message.appendChild(header);
+            message.appendChild(p);
+            message.appendChild(footer);
+
+            var body = document.querySelector('.chat-body');
+            body.append(message);
+        });
+
+        var joinRoom = () => {
+            axios.post(`/Chat/JoinRoom/${_connectionId}/@Model.Id`, null)
+                .then(result => {
+
+                }).catch(error => {
+
+                });
+        }
+
+        connection.start().then(() => {
+            connection.invoke('getConnectionId').then((connectionId) => {
+                _connectionId = connectionId;
+                joinRoom();
+            }).catch(error => {
+
+            });
+        });
+
+        var sendMessage = (event) => {
+            event.preventDefault();
+
+            var data = new FormData(event.target);
+
+            document.getElementById('message-id').value = '';
+
+            axios.post(`/Chat/SendMessage`, data)
+                .then(result => {
+
+                }).catch(error => {
+
+                });
+
+            var objDiv = document.getElementById('chat-body-id');
+            objDiv.scrollTop = objDiv.scrollHeight;
+        }
+    </script>
+}

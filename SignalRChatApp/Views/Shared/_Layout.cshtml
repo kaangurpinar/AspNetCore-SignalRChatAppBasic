@@ -1,0 +1,70 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - SignalRChatApp</title>
+    <link rel="stylesheet" href="~/css/style.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/SignalRChatApp.styles.css" asp-append-version="true" />
+</head>
+<body>
+    <div class=navbar>
+        <a asp-controller="Home" asp-action="Index" style="float: left;">Home</a>
+        @*<a asp-controller="Home" asp-action="Users">Users</a>
+        <a asp-controller="Home" asp-action=""></a>*@
+        @if (User.Identity.IsAuthenticated)
+        {
+            <a asp-controller="Account" asp-action="Logout" style="float: right;">Logout</a>
+        }
+        else
+        {
+            <a asp-controller="Account" asp-action="Login" style="float: right;">Login</a>
+            <a asp-controller="Account" asp-action="Register" style="float: right;">Register</a>
+        }
+    </div>
+
+    <div class="main">
+        @if (User.Identity.IsAuthenticated)
+        {
+            @await Component.InvokeAsync("Rooms")
+        }
+        <div class="chat">
+            @RenderBody()
+        </div>
+    </div>
+    
+    <div class="modal" id="create-room-modal">
+        <form class="modal-body" asp-controller="Home" asp-action="CreateRoom" autocomplete="off">
+            <input class="close" type="button" value="X" onclick="closeModal()"/>
+            <header>Create Room</header>
+            <div>
+                <input type="text" name="name" placeholder="Room Name"/>
+                <br /><br />
+                <input type="password" name="password" placeholder="Password"/>
+            </div>
+            <footer>
+                <input type="submit" value="Create"/>
+            </footer>
+        </form>
+    </div>
+
+    @*<div class="modal" id="check-room-password-modal">
+        <form class="modal-body" asp-controller="Home" asp-action="CheckRoomPassword" autocomplete="off">
+            <input class="close" type="button" value="X" onclick="closePasswordModal()" />
+            <header>Enter Room</header>
+            <div>
+                <input type="password" name="password" placeholder="Password" />
+            </div>
+            <footer>
+                <input type="submit" value="Enter" />
+            </footer>
+        </form>
+    </div>*@
+    
+
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="~/js/site.js" asp-append-version="true"></script>
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>
